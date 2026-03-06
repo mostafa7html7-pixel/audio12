@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محول الوسائط الذكي | Abqarieno</title>
+    <script src="coi-serviceworker.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 محول الوسائط (فيديو / صوت)</h1>
+        <p>يتم التحويل بالكامل داخل متصفحك (خصوصية 100%)</p>
+
+        <div class="upload-section">
+            <input type="file" id="uploader" accept="video/*,audio/*">
+            <label for="uploader" id="file-label">اختر ملف فيديو أو صوت</label>
+        </div>
+
+        <div class="controls">
+            <select id="format">
+                <option value="mp3">تحويل إلى صوت (MP3)</option>
+                <option value="mp4">تحويل إلى فيديو (MP4)</option>
+                <option value="wav">تحويل إلى واف (WAV)</option>
+            </select>
+            <button id="convert-btn">بدء التحويل الآن</button>
+        </div>
+
+        <div id="status" class="status">بانتظار اختيار ملف...</div>
+        
+        <div id="result" style="display:none;">
+            <p>✅ اكتمل التحويل!</p>
+            <a id="download-link" class="download-btn">تحميل الملف الناتج</a>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
