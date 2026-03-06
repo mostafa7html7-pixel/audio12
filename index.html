@@ -3,39 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>محول الوسائط الذكي | Abqarieno</title>
+    <title>Abqarieno Converter - تحويل إلى صوت</title>
+    
     <script src="coi-serviceworker.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header class="site-header">
+        <div class="logo-container">
+            <svg class="fanous-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l-2 4h4l-2-4zM8 6h8l2 10H6L8 6zM12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zM6 16h12"/>
+                <path d="M12 2v4"/>
+            </svg>
+            <h1 class="site-title">عبقرينـــــــــــــــــو</h1>
+        </div>
+    </header>
+
     <div class="container">
-        <h1>🎬 محول الوسائط (فيديو / صوت)</h1>
-        <p>يتم التحويل بالكامل داخل متصفحك (خصوصية 100%)</p>
+        <h2 class="neon-text">تحويل الفيديو إلى صوت</h2>
+        <p>اختر ملف فيديو ليبدأ التحويل تلقائياً</p>
 
         <div class="upload-section">
-            <input type="file" id="uploader" accept="video/*,audio/*">
-            <label for="uploader" id="file-label">اختر ملف فيديو أو صوت</label>
+            <input type="file" id="uploader" accept="video/*">
+            <video id="video-preview" muted playsinline></video>
+            <label for="uploader" id="file-label">
+                <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                <span id="file-name">اسحب الفيديو إلى هنا أو انقر للاختيار</span>
+            </label>
         </div>
 
-        <div class="controls">
-            <select id="format">
-                <option value="mp3">تحويل إلى صوت (MP3)</option>
-                <option value="mp4">تحويل إلى فيديو (MP4)</option>
-                <option value="wav">تحويل إلى واف (WAV)</option>
+        <div class="settings-section">
+            <label for="bitrate" class="settings-label">جودة الصوت (Bitrate):</label>
+            <select id="bitrate" class="custom-select">
+                <option value="128k">128 kbps (جيد - حجم صغير)</option>
+                <option value="192k" selected>192 kbps (عالي - متوازن)</option>
+                <option value="320k">320 kbps (احترافي - أفضل جودة)</option>
             </select>
-            <button id="convert-btn">بدء التحويل الآن</button>
         </div>
 
-        <div id="status" class="status">بانتظار اختيار ملف...</div>
-        
+        <div id="progress-container" class="progress-container" style="display:none;">
+            <p id="status">جاري التهيئة...</p>
+            <div class="progress-bg"><div id="progress-bar"></div></div>
+            <span id="percentage">0%</span>
+        </div>
+
         <div id="result" style="display:none;">
-            <p>✅ اكتمل التحويل!</p>
-            <a id="download-link" class="download-btn">تحميل الملف الناتج</a>
+            <p class="success-message">اكتمل التحويل بنجاح!</p>
+            <audio id="audio-result" controls></audio>
+            <a id="download-link" class="download-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>تحميل الملف</span>
+            </a>
         </div>
     </div>
 
-    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.umd.js"></script>
-    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+    <footer class="site-footer">
+        <p>تطوير المبرمج: <span class="programmer-name">مصطفى ابوطالب</span></p>
+        <p class="contact-info">لإنشاء المواقع والتواصل (واتساب): <a href="https://wa.me/201158606601" target="_blank">
+            <svg class="whatsapp-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.043 4.957A9.869 9.869 0 0 0 12.001 2a9.893 9.893 0 0 0-9.896 9.896c0 2.23.737 4.29 2.078 5.945l-2.178 6.22a.499.499 0 0 0 .63.63l6.22-2.178c1.655 1.341 3.715 2.078 5.945 2.078h.001a9.896 9.896 0 0 0 9.896-9.896 9.869 9.869 0 0 0-2.958-7.043zM12.001 20.13c-1.885 0-3.676-.58-5.19-1.658l-.37-.218-3.84 1.343 1.343-3.84-.218-.37c-1.078-1.514-1.658-3.305-1.658-5.19a8.137 8.137 0 0 1 8.137-8.137 8.137 8.137 0 0 1 8.137 8.137c0 4.49-3.647 8.137-8.137 8.137zm4.745-6.385c-.273-.136-1.617-.797-1.867-.887s-.431-.136-.614.136c-.182.273-.705.887-.864 1.061s-.32.182-.591.045c-.273-.136-1.159-.42-2.205-1.364a7.766 7.766 0 0 1-1.523-1.693c-.159-.273-.018-.42.118-.557.12-.12.273-.318.409-.477.136-.159.182-.273.273-.455s.045-.341-.023-.477c-.068-.136-.614-1.478-.841-2.012-.228-.534-.455-.455-.614-.455h-.523c-.182 0-.477.068-.727.341s-.978.955-.978 2.341c0 1.386 1.001 2.728 1.137 2.921.136.182 1.989 3.023 4.83 4.274.682.307 1.227.489 1.637.625.682.227 1.318.194 1.807.114.546-.091 1.617-.66 1.841-1.3c.228-.637.228-1.182.159-1.3Z"></path></svg>
+            <span>01158606601</span>
+        </a></p>
+    </footer>
+
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.0/dist/ffmpeg.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

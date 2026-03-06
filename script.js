@@ -1,56 +1,124 @@
-const { FFmpeg } = window.FFmpegWASM;
-const { fetchFile, toBlobURL } = window.FFmpegUtil;
+const { createFFmpeg, fetchFile } = FFmpeg;
 
-let ffmpeg = null;
+// تعريف المحرك مع روابط مستقرة
+const ffmpeg = createFFmpeg({
+    log: true,
+    corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+});
 
-const convertBtn = document.getElementById('convert-btn');
 const uploader = document.getElementById('uploader');
-const status = document.getElementById('status');
-const resultDiv = document.getElementById('result');
-const downloadLink = document.getElementById('download-link');
+const fileLabel = document.getElementById('file-label');
+const fileNameSpan = document.getElementById('file-name');
+const videoPreview = document.getElementById('video-preview');
 
-// 1. تحميل المكتبة عند فتح الصفحة
-async function loadFFmpeg() {
-    ffmpeg = new FFmpeg();
-    status.innerText = "جاري تحميل محرك المعالجة (FFmpeg)...";
-    
-    await ffmpeg.load({
-        coreURL: await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js', 'text/javascript'),
-        wasmURL: await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm', 'application/wasm'),
-    });
-    
-    status.innerText = "المحرك جاهز للاستخدام ✅";
-}
+// دالة لتحديث الواجهة باسم الملف
+const updateFileName = (file) => {
+    if (file) {
+        fileNameSpan.innerText = file.name;
+        fileLabel.classList.add('file-selected');
+        const url = URL.createObjectURL(file);
+        videoPreview.src = url;
+        convert(); // بدء التحويل تلقائياً
+    } else {
+        fileNameSpan.innerText = 'اسحب الفيديو إلى هنا أو انقر للاختيار';
+        fileLabel.classList.remove('file-selected');
+        videoPreview.src = '';
+    }
+};
 
-loadFFmpeg();
+uploader.onchange = (e) => updateFileName(e.target.files[0]);
 
-// 2. معالجة التحويل
-convertBtn.onclick = async () => {
-    const file = uploader.files[0];
-    if (!file) return alert("يرجى اختيار ملف أولاً!");
+// إضافة ميزة السحب والإفلات
+fileLabel.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileLabel.classList.add('dragover');
+});
 
-    const format = document.getElementById('format').value;
-    convertBtn.disabled = true;
-    status.innerText = "جاري التحويل... قد يستغرق ذلك وقتاً حسب حجم الملف";
+fileLabel.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileLabel.classList.remove('dragover');
+});
 
-    const inputName = 'input_file';
-    const outputName = `output_file.${format}`;
+fileLabel.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fileLabel.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        uploader.files = files;
+        updateFileName(files[0]);
+    }
+});
 
-    // رفع الملف لذاكرة المتصفح
-    await ffmpeg.writeFile(inputName, await fetchFile(file));
+const convert = async () => {
+    const file = document.getElementById('uploader').files[0];
+    if (!file) return alert("اختر ملفاً أولاً");
 
-    // تنفيذ أمر التحويل
-    await ffmpeg.exec(['-i', inputName, outputName]);
+    const status = document.getElementById('status');
+    const progBar = document.getElementById('progress-bar');
+    const percentText = document.getElementById('percentage');
+    const resultDiv = document.getElementById('result');
+    const successMessage = resultDiv.querySelector('.success-message');
 
-    // قراءة الملف الناتج
-    const data = await ffmpeg.readFile(outputName);
-    const blob = new Blob([data.buffer], { type: format === 'mp3' ? 'audio/mp3' : 'video/mp4' });
+    try {
+        resultDiv.style.display = 'none';
 
-    // عرض رابط التحميل
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = outputName;
-    
-    resultDiv.style.display = 'block';
-    status.innerText = "تم التحويل بنجاح!";
-    convertBtn.disabled = false;
+        document.getElementById('progress-container').style.display = 'flex';
+        progBar.style.width = '0%';
+        percentText.innerText = '0%';
+        status.innerText = "جاري تهيئة المحرك...";
+
+        // مراقبة التقدم
+        ffmpeg.setProgress(({ ratio }) => {
+            const p = Math.round(ratio * 100);
+            progBar.style.width = p + '%';
+            percentText.innerText = p + '%';
+        });
+
+        if (!ffmpeg.isLoaded()) {
+            await ffmpeg.load();
+        }
+
+        status.innerText = "جاري المعالجة... لا تغلق الصفحة";
+        
+        // تم التعديل ليقوم بالتحويل إلى صوت MP3 دائماً
+        const outputName = 'output.mp3';
+        const type = 'audio/mp3';
+        
+        // الحصول على الجودة المختارة من قبل المستخدم
+        const bitrate = document.getElementById('bitrate').value;
+
+        // تحويل أي ملف (فيديو أو صوت) إلى صوت MP3
+        const extension = file.name.split('.').pop();
+        const inputWithExt = `input_file.${extension}`;
+
+        ffmpeg.FS('writeFile', inputWithExt, await fetchFile(file));
+
+        // -i: الملف المدخل
+        // -vn: تجاهل الفيديو (استخراج الصوت فقط)
+        // -ab 192k: تحديد جودة الصوت (audio bitrate)
+        await ffmpeg.run('-i', inputWithExt, '-vn', '-ab', bitrate, outputName);
+
+        // قراءة النتيجة
+        const data = ffmpeg.FS('readFile', outputName);
+        const blob = new Blob([data.buffer], { type: type });
+        const url = URL.createObjectURL(blob);
+
+        const downloadLink = document.getElementById('download-link');
+        downloadLink.href = url;
+        downloadLink.download = `Abqarieno_${outputName}`;
+        
+        const audioResult = document.getElementById('audio-result');
+        audioResult.src = url;
+        resultDiv.style.display = 'flex';
+        document.getElementById('progress-container').style.display = 'none';
+    } catch (error) {
+        console.error(error);
+        status.innerText = `حدث خطأ: ${error.message || 'يرجى التحقق من الملف أو إعدادات التحويل.'}`;
+        document.getElementById('progress-container').style.display = 'none';
+    } finally {
+        // لا يوجد زر لإعادة تفعيله، العملية تتم تلقائياً
+    }
 };
